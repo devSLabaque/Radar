@@ -12,6 +12,13 @@ PRESETS = {
     "Madrid": (40.47, -3.56), "Rome": (41.8, 12.25), "New York": (40.64, -73.78),
     "Personnalisé": None,
 }
+CARTO = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>'
+TILES = {
+    "Sombre (CARTO)": ("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", CARTO),
+    "Sombre sans labels (CARTO)": ("https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png", CARTO),
+    "Clair (CARTO)": ("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", CARTO),
+    "OpenStreetMap": ("https://tile.openstreetmap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors"),
+}
 PLANE = ('<svg viewBox="0 0 24 24" width="20" height="20" style="transform:rotate({r}deg);filter:drop-shadow(0 0 2px #000)">'
          '<path fill="{c}" d="M12 1l2.3 8 8.2 4.5v2.2l-8.2-2.4-.5 6 2.5 1.9V23L12 22l-4.3 1v-1.8l2.5-1.9-.5-6-8.2 2.4v-2.2l8.2-4.5z"/></svg>')
 
@@ -116,6 +123,7 @@ with st.sidebar:
     s_trail = st.toggle("Trails", True)
     s_plans = st.toggle("Tous les plans de vol", False)
     s_rings = st.toggle("Cercles de portée", False)
+    fond = st.selectbox("Fond de carte", list(TILES))
 
 # ---------- cœur ----------
 @st.fragment(run_every=every)
@@ -200,7 +208,10 @@ def radar():
     # carte
     with left:
         mp = folium.Map(location=[lat0, lon0], zoom_start={25: 9, 50: 8, 100: 7}.get(radius, 6 if radius <= 150 else 5),
-                        tiles="CartoDB dark_matter", control_scale=True)
+                        tiles=None, control_scale=True)
+        url, attr = TILES[fond]
+        folium.TileLayer(tiles=url, attr=attr, subdomains="abcd" if "cartocdn" in url else "abc",
+                         max_zoom=19, name=fond).add_to(mp)
         if s_rings:
             for r_ in range(50, radius + 1, 50):
                 folium.Circle([lat0, lon0], radius=r_ * 1852, color="#37d6c5", weight=1, opacity=.3, fill=False).add_to(mp)
